@@ -3,33 +3,70 @@
 */
 $fs = 0.01;
 
-MM_PER_INCH = 25.4;
 SPHERE_FACETS = 100;
-CONE_FACETS   = 100;
+CYLINDER_FACETS = 100;
 
-LENS_R  = 100.0;
-THICKNESS_FRACTION = 0.1;
+LENS_R  = 25;
+LENS_T  = 1;
+BASE_T  = 2;
 N_SECTIONS = 5;
 
 
-module lens_cone(r,s1,s2)
+
+module fresnel_lens( lens_radius    = LENS_R,
+                     lens_thickness = LENS_T,
+                     num_sections   = N_SECTIONS
+                   )
 {
-    translate([0,0,(1-THICKNESS_FRACTION)*r])
-    cylinder(h=r, r1=r*s1, r2=r*s2 , $fn=CONE_FACETS);
+  for (n = [1:num_sections])
+  {
+    t_n  = n*lens_thickness;
+    a_n  = sqrt((2*lens_radius - t_n)*t_n);
+    
+    t_nm1 = (n-1)*lens_thickness;
+    a_nm1 = sqrt((2*lens_radius - t_nm1)*t_nm1);
+ 
+    intersection()
+    {
+      translate([0,0,-(lens_radius - t_n - BASE_T)])
+      sphere(r=lens_radius, $fn=SPHERE_FACETS);
+      difference(){
+        cylinder(h=lens_radius, r=a_n,   $fn=CYLINDER_FACETS);
+        cylinder(h=lens_radius, r=a_nm1, $fn=CYLINDER_FACETS);
+      }
+    }
+  }
 }
 
-module fresnel_lens( lens_radius = LENS_R,
-   
-                      )
+MOLD_THICKNESS = 3;
+
+module fresnel_lens_mold( lens_radius    = LENS_R,
+                          lens_thickness = LENS_T,
+                          num_sections   = N_SECTIONS,
+                          mold_thickness = MOLD_THICKNESS
+                         )
 {
-  translate([0,0,-(1-THICKNESS_FRACTION)*lens_radius])
-  intersection()
-  {
-    sphere(r=lens_radius, $fn=SPHERE_FACETS);
-    #lens_cone(r=lens_radius, s1=1/N_SECTIONS, s2= 0);
+  t_N  = num_sections*lens_thickness;
+  a_N  = sqrt((2*lens_radius - t_N)*t_N);
+  
+  translate([0,0,mold_thickness])
+  rotate(a=180, v=[1,0,0])
+  difference(){
+    translate([0,0,mold_thickness/2])
+    cube([2.2*a_N,2.2*a_N, mold_thickness], center=true);
+    translate([0,0,-lens_thickness/2])
+    #fresnel_lens(lens_radius = lens_radius,
+                 lens_thickness = lens_thickness,
+                 num_sections = num_sections
+                 );
   }
 }
 /******************************************************************************/
 //rendering of part
 
-fresnel_lens();
+//fresnel_lens();
+fresnel_lens_mold();
+
+
+
+
