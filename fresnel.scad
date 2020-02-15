@@ -12,30 +12,30 @@ BASE_T  = 2;
 N_SECTIONS = 5;
 
 
-
 module fresnel_lens( lens_radius    = LENS_R,
                      lens_thickness = LENS_T,
                      num_sections   = N_SECTIONS
                    )
 {
-  for (n = [1:num_sections])
-  {
-    t_n  = n*lens_thickness;
-    a_n  = sqrt((2*lens_radius - t_n)*t_n);
-    
-    t_nm1 = (n-1)*lens_thickness;
-    a_nm1 = sqrt((2*lens_radius - t_nm1)*t_nm1);
- 
-    intersection()
+  rotate_extrude($fn=CYLINDER_FACETS)  
+    for (n = [1:num_sections])
     {
-      translate([0,0,-(lens_radius - t_n - BASE_T)])
-      sphere(r=lens_radius, $fn=SPHERE_FACETS);
-      difference(){
-        cylinder(h=lens_radius, r=a_n,   $fn=CYLINDER_FACETS);
-        cylinder(h=lens_radius, r=a_nm1, $fn=CYLINDER_FACETS);
+      t_n  = n*lens_thickness;
+      a_n  = sqrt((2*lens_radius - t_n)*t_n);
+      
+      t_nm1 = (n-1)*lens_thickness;
+      a_nm1 = sqrt((2*lens_radius - t_nm1)*t_nm1);
+   
+      intersection()
+      {
+        translate([0,-(lens_radius - t_n - BASE_T)])
+          circle(r=lens_radius, $fn=SPHERE_FACETS);
+        difference(){
+          square([a_n,lens_radius]);
+          square([a_nm1,lens_radius]);
+        }
       }
     }
-  }
 }
 
 MOLD_THICKNESS = 3;
